@@ -1,57 +1,70 @@
-const { validationResult, body } = require("express-validator");
+const Joi = require("joi");
 
-// Middleware to check validation results
-exports.validate = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      success: false,
-      errors: errors.array(),
-    });
-  }
-  next();
+// Validation schemas
+const schemas = {
+  register: Joi.object({
+    username: Joi.string().min(3).required().messages({
+      "string.min": "Username must be at least 3 characters long",
+      "any.required": "Username is required",
+    }),
+    email: Joi.string().email().required().messages({
+      "string.email": "Please provide a valid email address",
+      "any.required": "Email is required",
+    }),
+    password: Joi.string().min(6).required().messages({
+      "string.min": "Password must be at least 6 characters long",
+      "any.required": "Password is required",
+    }),
+  }),
+  login: Joi.object({
+    email: Joi.string().email().required().messages({
+      "string.email": "Please provide a valid email address",
+      "any.required": "Email is required",
+    }),
+    password: Joi.string().required().messages({
+      "any.required": "Password is required",
+    }),
+  }),
+  post: Joi.object({
+    title: Joi.string().min(1).max(100).required().messages({
+      "string.min": "Title must be at least 1 character long",
+      "string.max": "Title cannot exceed 100 characters",
+      "any.required": "Title is required",
+    }),
+    content: Joi.string().min(1).required().messages({
+      "string.min": "Content must be at least 1 character long",
+      "any.required": "Content is required",
+    }),
+    tags: Joi.array().items(Joi.string()).optional(),
+  }),
+  profileUpdate: Joi.object({
+    username: Joi.string().min(3).optional().messages({
+      "string.min": "Username must be at least 3 characters long",
+    }),
+    email: Joi.string().email().optional().messages({
+      "string.email": "Please provide a valid email address",
+    }),
+    bio: Joi.string().optional(),
+  }).or("username", "email", "bio"), // At least one field must be provided
 };
 
-// Registration validation rules
-exports.registerValidation = [
-  body("username")
-    .trim()
-    .isLength({ min: 3 })
-    .withMessage("Username must be at least 3 characters long"),
-  body("email").isEmail().withMessage("Please provide a valid email address"),
-  body("password")
-    .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 characters long"),
-];
+// Validation middleware
+const validate = (schema) => {
+  return (req, res, next) => {
+    const { error } = schema.validate(req.body, { abortEarly: false });
+    if (error) {
+      const errorMessages = error.details.map((detail) => detail.message);
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errorMessages,
+      });
+    }
+    next();
+  };
+};
 
-// Login validation rules
-exports.loginValidation = [
-  body("email").isEmail().withMessage("Please provide a valid email address"),
-  body("password").exists().withMessage("Password is required"),
-];
-
-// Post validation rules
-exports.postValidation = [
-  body("title")
-    .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage("Title is required and cannot exceed 100 characters"),
-  body("content")
-    .trim()
-    .isLength({ min: 1 })
-    .withMessage("Content is required"),
-];
-
-// User profile update validation rules
-exports.profileUpdateValidation = [
-  body("username")
-    .optional()
-    .trim()
-    .isLength({ min: 3 })
-    .withMessage("Username must be at least 3 characters long"),
-  body("email")
-    .optional()
-    .isEmail()
-    .withMessage("Please provide a valid email address"),
-  body("bio").optional().trim(),
-];
+module.exports = {
+  validate,
+  schemas,
+};

@@ -30,7 +30,6 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const { username, email, bio } = req.body;
 
-    // Check if username or email is already taken
     if (username || email) {
       const existingUser = await User.findOne({
         $and: [
@@ -47,13 +46,11 @@ exports.updateProfile = async (req, res, next) => {
       }
     }
 
-    // Create update object with only the fields that are provided
     const updateData = {};
     if (username) updateData.username = username;
     if (email) updateData.email = email;
     if (bio !== undefined) updateData.bio = bio;
 
-    // Update user
     const user = await User.findByIdAndUpdate(req.user.id, updateData, {
       new: true,
       runValidators: true,

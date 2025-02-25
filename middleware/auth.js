@@ -6,7 +6,6 @@ exports.protect = async (req, res, next) => {
   try {
     let token;
 
-    // Check for token in headers
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
@@ -14,7 +13,6 @@ exports.protect = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
     }
 
-    // Check if token exists
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -23,19 +21,15 @@ exports.protect = async (req, res, next) => {
     }
 
     try {
-      // Verify token
       const decoded = jwt.verify(token, config.jwtSecret);
-
-      // Get user from the token
-      req.user = await User.findById(decoded.id);
-
+      // Fetch full user object instead of just ID
+      req.user = await User.findById(decoded.id).select("-password"); // Exclude password
       if (!req.user) {
         return res.status(401).json({
           success: false,
           message: "User not found",
         });
       }
-
       next();
     } catch (error) {
       return res.status(401).json({

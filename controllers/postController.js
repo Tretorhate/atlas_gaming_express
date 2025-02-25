@@ -29,14 +29,8 @@ exports.createPost = async (req, res, next) => {
 // @access  Private
 exports.getPosts = async (req, res, next) => {
   try {
-    let query = {};
-
-    // If not admin, only show user's own posts
-    if (req.user.role !== config.roles.ADMIN) {
-      query.author = req.user.id;
-    }
-
-    const posts = await Post.find(query)
+    // Fetch all posts regardless of author, but still require authentication via `protect` middleware
+    const posts = await Post.find()
       .populate("author", "username email")
       .sort({ createdAt: -1 });
 
@@ -101,11 +95,7 @@ exports.updatePost = async (req, res, next) => {
       });
     }
 
-    // Check if user owns the post or is admin
-    if (
-      post.author.toString() !== req.user.id &&
-      req.user.role !== config.roles.ADMIN
-    ) {
+    if (post.author.toString() !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
         message: "Not authorized to update this post",
@@ -113,8 +103,6 @@ exports.updatePost = async (req, res, next) => {
     }
 
     const { title, content, tags } = req.body;
-
-    // Create update object with only provided fields
     const updateData = {};
     if (title) updateData.title = title;
     if (content) updateData.content = content;

@@ -9,19 +9,17 @@ const {
 } = require("../controllers/postController");
 const { protect } = require("../middleware/auth");
 const { adminOnly } = require("../middleware/rbac");
-const { postValidation, validate } = require("../middleware/validation");
+const { validate, schemas } = require("../middleware/validation");
 
 const router = express.Router();
 
-// Protect all routes
 router.use(protect);
 
-// Post routes
-router.post("/", postValidation, validate, createPost);
+router.post("/", validate(schemas.post), createPost);
 router.get("/", getPosts);
 router.get("/all", adminOnly, getAllPosts);
 router.get("/:id", getPost);
-router.put("/:id", postValidation, validate, updatePost);
+router.put("/:id", validate(schemas.post), updatePost);
 router.delete("/:id", deletePost);
 
 module.exports = router;
