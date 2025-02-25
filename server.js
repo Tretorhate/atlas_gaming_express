@@ -1,4 +1,4 @@
-require("dotenv").config(); // Add this line
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
@@ -11,7 +11,13 @@ const app = express();
 
 connectDB();
 
-app.use(cors({ origin: "http://localhost:3000" }));
+// CORS: Use environment variable for frontend URL in production
+const allowedOrigin =
+  process.env.NODE_ENV === "production"
+    ? process.env.FRONTEND_URL // e.g., "https://your-frontend-app.com"
+    : "http://localhost:3000";
+app.use(cors({ origin: allowedOrigin }));
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -26,6 +32,6 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
   console.log(`Test it at: http://localhost:${PORT}`);
 });
