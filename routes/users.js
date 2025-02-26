@@ -15,7 +15,5 @@ router.use(protect);
 
 router.get("/profile", getProfile);
 router.put("/profile", validate(schemas.profileUpdate), updateProfile);
-router.get("/", adminOnly, getAllUsers);
-router.delete("/:id", adminOnly, deleteUser);
 
 module.exports = router;
