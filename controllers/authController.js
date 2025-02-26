@@ -1,9 +1,11 @@
+// controllers/authController.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const config = require("../config/config");
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, config.jwtSecret, {
+const generateToken = (user) => {
+  // Changed to accept full user object
+  return jwt.sign({ id: user._id, role: user.role }, config.jwtSecret, {
     expiresIn: config.jwtExpiration,
   });
 };
@@ -21,7 +23,7 @@ exports.register = async (req, res, next) => {
     }
 
     const user = await User.create({ username, email, password });
-    const token = generateToken(user._id);
+    const token = generateToken(user); // Pass full user object
 
     res.status(201).json({
       success: true,
@@ -43,22 +45,14 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select("+password");
-    if (!user) {
+    if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",
       });
     }
 
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    const token = generateToken(user._id);
+    const token = generateToken(user); // Pass full user object
 
     res.status(200).json({
       success: true,
