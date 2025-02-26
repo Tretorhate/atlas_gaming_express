@@ -13,13 +13,14 @@ const { validate, schemas } = require("../middleware/validation");
 
 const router = express.Router();
 
-router.use(protect);
-
-router.post("/", validate(schemas.post), createPost);
+// Public routes
 router.get("/", getPosts);
-router.get("/all", adminOnly, getAllPosts);
 router.get("/:id", getPost);
-router.put("/:id", validate(schemas.post), updatePost);
-router.delete("/:id", deletePost);
+
+// Protected routes
+router.post("/", protect, validate(schemas.post), createPost);
+router.get("/all", protect, adminOnly, getAllPosts);
+router.put("/:id", protect, validate(schemas.post), updatePost);
+router.delete("/:id", protect, deletePost);
 
 module.exports = router;

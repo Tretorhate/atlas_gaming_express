@@ -61,17 +61,7 @@ exports.getPost = async (req, res, next) => {
       });
     }
 
-    // Check if user owns the post or is admin
-    if (
-      post.author._id.toString() !== req.user.id &&
-      req.user.role !== config.roles.ADMIN
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to access this post",
-      });
-    }
-
+    // No authorization check needed - public access
     res.status(200).json({
       success: true,
       data: post,
